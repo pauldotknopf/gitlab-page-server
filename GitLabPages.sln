@@ -1,0 +1,21 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{2F930A32-905B-4FAF-86A2-E31FF3DF964D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GitLabPages", "src\GitLabPages\GitLabPages.csproj", "{31896A8B-82FA-4231-9FA7-63B18EBAD955}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{31896A8B-82FA-4231-9FA7-63B18EBAD955} = {2F930A32-905B-4FAF-86A2-E31FF3DF964D}
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{31896A8B-82FA-4231-9FA7-63B18EBAD955}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{31896A8B-82FA-4231-9FA7-63B18EBAD955}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{31896A8B-82FA-4231-9FA7-63B18EBAD955}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{31896A8B-82FA-4231-9FA7-63B18EBAD955}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
