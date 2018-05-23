@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using GitLabPages.Api;
+using GitLabPages.Web.Middleware;
+using GitLabPages.Web.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -24,6 +27,11 @@ namespace GitLabPages.Web
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+            services.Configure<GitLabPagesOptions>(options => { });
+            services.Configure<GitlabApiOptions>(options => { });
+            services.AddSingleton<GitlabApi>();
+            services.AddScoped<Services.IProjectContext, Services.ProjectContext>();
             services.AddMvc();
         }
 
@@ -38,6 +46,16 @@ namespace GitLabPages.Web
                 {
                     controller = "Hook",
                     action = "Index"
+                });
+            });
+            
+            app.UseProjects(appProjects =>
+            {
+                
+                appProjects.Run(async (context) =>
+                {
+                    var currentProject = context.RequestServices.GetRequiredService<IProjectContext>().CurrentProject;
+                    await context.Response.WriteAsync(currentProject.Id.ToString());
                 });
             });
         }

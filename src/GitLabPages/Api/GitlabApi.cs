@@ -1,0 +1,122 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Threading.Tasks;
+using System.Web;
+using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
+
+namespace GitLabPages.Api
+{
+    public class GitlabApi
+    {
+        readonly GitlabApiOptions _options;
+
+        public GitlabApi(IOptions<GitlabApiOptions> options)
+        {
+            _options = options.Value;
+        }
+
+        public IProjects Projects => new Modules.Projects(this);
+        
+        internal async Task<T> Post<T>(string url, object data)
+        {
+            using (var client = GetClient())
+            {
+                using (var input = new StringContent(
+                    JsonConvert.SerializeObject(data),
+                    Encoding.UTF8,
+                    "application/json"))
+                {
+                    using (var response = await client.PostAsync($"/api/v4{url}", input))
+                    {
+                        using (var output = response.Content)
+                        {
+                            var json = await output.ReadAsStringAsync();
+                            Debug.WriteLine(json);
+                            return JsonConvert.DeserializeObject<T>(json);
+                        }
+                    }
+                }
+            }
+        }
+        
+        internal async Task<T> Put<T>(string url, object data)
+        {
+            using (var client = GetClient())
+            {
+                using (var input = new StringContent(
+                    JsonConvert.SerializeObject(data),
+                    Encoding.UTF8,
+                    "application/json"))
+                {
+                    using (var response = await client.PutAsync($"/api/v4{url}", input))
+                    {
+                        using (var output = response.Content)
+                        {
+                            var json = await output.ReadAsStringAsync();
+                            Debug.WriteLine(json);
+                            return JsonConvert.DeserializeObject<T>(json);
+                        }
+                    }
+                }
+            }
+        }
+        
+        internal async Task<T> Get<T>(string url, Dictionary<string, string> queryParameters = null)
+        {
+            if (queryParameters != null && queryParameters.Count > 0)
+            {
+                var q = HttpUtility.ParseQueryString(string.Empty);
+                foreach (var entry in queryParameters)
+                {
+                    q.Add(entry.Key, entry.Value);
+                }
+
+                url += $"?{q}";
+            }
+            
+            using (var client = GetClient())
+            {
+                using (var response = await client.GetAsync($"/api/v4{url}"))
+                {
+                    if(!response.IsSuccessStatusCode)
+                        throw new ApiRequestException(string.Empty, response.StatusCode);
+                    using (var content = response.Content)
+                    {
+                        var json = await content.ReadAsStringAsync();
+                        Debug.WriteLine(json);
+                        return JsonConvert.DeserializeObject<T>(json);
+                    }
+                }
+            }
+        }
+        
+        private HttpClient GetClient()
+        {
+            var client = new HttpClient();
+            client.BaseAddress = new Uri(_options.Url);
+            client.DefaultRequestHeaders.Add("Private-Token", _options.Token);
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            return client;
+        }
+    }
+
+    public interface IProjects
+    {
+        IProject Project(int projectId);
+
+        IProject Project(string fullName);
+    }
+
+    public interface IProject
+    {
+        string ProjectId { get; }
+        
+        Task<Types.Project> Get();
+    }
+}
