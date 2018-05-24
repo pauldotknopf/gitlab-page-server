@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Primitives;
 
 namespace GitLabPages.Web
 {
@@ -31,7 +32,7 @@ namespace GitLabPages.Web
             services.Configure<GitLabPagesOptions>(options => { });
             services.Configure<GitlabApiOptions>(options => { });
             services.AddSingleton<GitlabApi>();
-            services.AddScoped<Services.IProjectContext, Services.ProjectContext>();
+            services.AddScoped<IProjectContext, ProjectContext>();
             services.AddMvc();
         }
 
@@ -51,11 +52,33 @@ namespace GitLabPages.Web
             
             app.UseProjects(appProjects =>
             {
-                
                 appProjects.Run(async (context) =>
                 {
-                    var currentProject = context.RequestServices.GetRequiredService<IProjectContext>().CurrentProject;
-                    await context.Response.WriteAsync(currentProject.Id.ToString());
+                    var projectContext = context.RequestServices.GetRequiredService<IProjectContext>();
+                    var api = context.RequestServices.GetRequiredService<GitlabApi>();
+                    
+                    var artifact = context.Request.Path;
+
+                    PathString fullPath = "/public";
+                    fullPath = fullPath.Add(artifact);
+                    
+                    await api.Projects.Project(projectContext.CurrentProject.Id)
+                        .Pipelines().Pipeline(projectContext.CurrentPipeline.Id)
+                        .Jobs().Job(projectContext.CurrentJob.Id)
+                        .GetArtifact(fullPath, async responseMessage =>
+                        {
+                            // Copy the request headers
+                            foreach (var header in responseMessage.Headers)
+                            {
+                                context.Response.Headers.TryAdd(header.Key, new StringValues(header.Value.ToArray()));
+                            }
+
+                            context.Response.ContentType = responseMessage.Content.Headers.ContentType.ToString();
+                            using (var content = responseMessage.Content)
+                            {
+                                await content.CopyToAsync(context.Response.Body);
+                            }
+                        });
                 });
             });
         }

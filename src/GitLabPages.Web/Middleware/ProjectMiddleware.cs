@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using GitLabPages.Api;
+using GitLabPages.Api.Requests;
 using GitLabPages.Api.Types;
 using GitLabPages.Web.Services;
 using Microsoft.AspNetCore.Builder;
@@ -23,17 +25,17 @@ namespace GitLabPages.Web.Middleware
     {
         readonly RequestDelegate _next;
         readonly RequestDelegate _action;
-        readonly GitlabApi _gitLabApi;
+        readonly GitlabApi _api;
         readonly GitLabPagesOptions _options;
 
         public ProjectMiddleware(RequestDelegate next,
             RequestDelegate action,
-            GitlabApi gitLabApi,
+            GitlabApi api,
             IOptions<GitLabPagesOptions> options)
         {
             _next = next;
             _action = action;
-            _gitLabApi = gitLabApi;
+            _api = api;
             _options = options.Value;
         }
 
@@ -53,7 +55,7 @@ namespace GitLabPages.Web.Middleware
                 else
                     current += $"/{part}";
 
-                project = await _gitLabApi.Projects.Project(System.Net.WebUtility.UrlEncode(current)).Get();
+                project = await _api.Projects.Project(current).Get();
                 
                 if(project != null) break;
             }
@@ -63,19 +65,44 @@ namespace GitLabPages.Web.Middleware
                 // No path was found. Let's try to treat the path as the root project.
                 if(!string.IsNullOrEmpty(_options.RootProject))
                 {
-                    project = await _gitLabApi.Projects.Project(_options.RootProject).Get();
+                    project = await _api.Projects.Project(_options.RootProject).Get();
                 }
             }
 
             if (project != null)
             {
                 context.Items["_currentProject"] = project;
-                var options = new MapOptions()
+                
+                // Let's try to get the latest succesful pipeline.
+                var pipeline = (await _api.Projects.Project(project.Id).Pipelines().Get(new PipelinesRequest
                 {
-                    Branch = _action,
-                    PathMatch = context.Request.Path
-                };
-                await new MapMiddleware(_next, options).Invoke(context);
+                    Ref = "master",
+                    Status = "success"
+                })).FirstOrDefault();
+                
+                if(pipeline != null)
+                {
+                    context.Items["_currentPipeline"] = pipeline;
+                    
+                    // Try to get the pages job.
+
+                    var jobs = await _api.Projects.Project(project.Id).Pipelines().Pipeline(pipeline.Id).Jobs().Get();
+
+                    var pagesJob = jobs.FirstOrDefault(x => x.Name == "pages");
+
+                    if (pagesJob != null)
+                    {
+                        context.Items["_currentJob"] = pagesJob;
+
+                        var options = new MapOptions()
+                        {
+                            Branch = _action,
+                            PathMatch = $"/{current}"
+                        };
+                        
+                        await new MapMiddleware(_next, options).Invoke(context);
+                    }
+                }
             }
             else
             {

@@ -24,7 +24,7 @@ namespace GitLabPages.Api.Modules
 
         public IProject Project(string fullName)
         {
-            ProjectId = fullName;
+            ProjectId = WebUtility.UrlEncode(fullName);
             return this;
         }
 
@@ -39,6 +39,11 @@ namespace GitLabPages.Api.Modules
                 if (ex.StatusCode == HttpStatusCode.NotFound) return null;
                 throw;
             }
+        }
+
+        public IPipelines Pipelines()
+        {
+            return new Pipelines(this, _api);
         }
     }
 }

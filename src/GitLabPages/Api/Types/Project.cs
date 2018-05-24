@@ -6,5 +6,8 @@ namespace GitLabPages.Api.Types
     {
         [JsonProperty("id")]
         public int Id { get; set; }
+        
+        [JsonProperty("path_with_namespace")]
+        public string PathWithNamespace { get; set; }
     }
 }
