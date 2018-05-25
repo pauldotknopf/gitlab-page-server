@@ -145,7 +145,9 @@ namespace GitLabPages.Api
         
         Task<Types.Project> Get();
 
-        IPipelines Pipelines();
+        IPipelines Pipelines { get; }
+        
+        IJobs Jobs { get; }
     }
 
     public interface IPipelines
@@ -165,7 +167,7 @@ namespace GitLabPages.Api
 
         Task<Types.Pipeline> Get();
 
-        IJobs Jobs();
+        IJobs Jobs { get; }
     }
 
     public interface IJobs

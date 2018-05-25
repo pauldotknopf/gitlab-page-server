@@ -74,11 +74,13 @@ namespace GitLabPages.Web.Middleware
                 context.Items["_currentProject"] = project;
                 
                 // Let's try to get the latest succesful pipeline.
-                var pipeline = (await _api.Projects.Project(project.Id).Pipelines().Get(new PipelinesRequest
-                {
-                    Ref = "master",
-                    Status = "success"
-                })).FirstOrDefault();
+                var pipeline = (await _api.Projects.Project(project.Id)
+                    .Pipelines.Get(new PipelinesRequest
+                    {
+                        Ref = "master",
+                        Status = "success"
+                    }))
+                    .FirstOrDefault();
                 
                 if(pipeline != null)
                 {
@@ -86,7 +88,9 @@ namespace GitLabPages.Web.Middleware
                     
                     // Try to get the pages job.
 
-                    var jobs = await _api.Projects.Project(project.Id).Pipelines().Pipeline(pipeline.Id).Jobs().Get();
+                    var jobs = await _api.Projects.Project(project.Id)
+                        .Pipelines.Pipeline(pipeline.Id)
+                        .Jobs.Get();
 
                     var pagesJob = jobs.FirstOrDefault(x => x.Name == "pages");
 
@@ -94,7 +98,7 @@ namespace GitLabPages.Web.Middleware
                     {
                         context.Items["_currentJob"] = pagesJob;
 
-                        var options = new MapOptions()
+                        var options = new MapOptions
                         {
                             Branch = _action,
                             PathMatch = $"/{current}"

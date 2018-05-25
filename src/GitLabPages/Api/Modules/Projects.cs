@@ -41,9 +41,8 @@ namespace GitLabPages.Api.Modules
             }
         }
 
-        public IPipelines Pipelines()
-        {
-            return new Pipelines(this, _api);
-        }
+        public IPipelines Pipelines => new Pipelines(this, _api);
+        
+        public IJobs Jobs => new Jobs(_api, this, null);
     }
 }

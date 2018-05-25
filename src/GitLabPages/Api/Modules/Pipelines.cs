@@ -58,9 +58,6 @@ namespace GitLabPages.Api.Modules
             return _api.Get<Types.Pipeline>($"/projects/{ProjectId}/pipelines/{PipelineId}");
         }
 
-        public IJobs Jobs()
-        {
-            return new Jobs(_api, _project, this);
-        }
+        public IJobs Jobs => new Jobs(_api, _project, this);
     }
 }

@@ -37,8 +37,12 @@ namespace GitLabPages.Api.Modules
             {
                 queryParameters = JsonConvert.DeserializeObject<Dictionary<string, string>>(JsonConvert.SerializeObject(request));
             }
-            
-            return _api.Get<List<Types.Job>>($"/projects/{ProjectId}/pipelines/{_pipeline.PipelineId}/jobs",
+
+            var url = _pipeline != null
+                ? $"/projects/{ProjectId}/pipelines/{_pipeline.PipelineId}/jobs"
+                : $"/projects/{ProjectId}/jobs";
+                 
+            return _api.Get<List<Types.Job>>(url,
                 queryParameters);
         }
 

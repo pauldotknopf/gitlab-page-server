@@ -63,8 +63,7 @@ namespace GitLabPages.Web
                     fullPath = fullPath.Add(artifact);
                     
                     await api.Projects.Project(projectContext.CurrentProject.Id)
-                        .Pipelines().Pipeline(projectContext.CurrentPipeline.Id)
-                        .Jobs().Job(projectContext.CurrentJob.Id)
+                        .Jobs.Job(projectContext.CurrentJob.Id)
                         .GetArtifact(fullPath, async responseMessage =>
                         {
                             // Copy the request headers
