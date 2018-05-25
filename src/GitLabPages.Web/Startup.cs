@@ -1,20 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.IO;
 using GitLabPages.Api;
 using GitLabPages.Web.Middleware;
-using GitLabPages.Web.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
-using Microsoft.Extensions.Primitives;
 
 namespace GitLabPages.Web
 {
@@ -32,11 +24,12 @@ namespace GitLabPages.Web
         {
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddSingleton<IJobArtifactCache, Impl.JobArtifactCache>();
+            services.AddSingleton<IPathContextResolver, Impl.PathContextResolver>();
             services.Configure<GitLabPagesOptions>(options => { });
             services.Configure<GitlabApiOptions>(options => { });
             services.AddSingleton<GitlabApi>();
-            services.AddScoped<IProjectContext, ProjectContext>();
             services.AddMvc();
+            services.AddMemoryCache();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -57,13 +50,13 @@ namespace GitLabPages.Web
             {
                 appProjects.Run(async (context) =>
                 {
-                    var projectContext = context.RequestServices.GetRequiredService<IProjectContext>();
+                    var pathContext = (PathContext)context.Items["_pathContext"];
                     var api = context.RequestServices.GetRequiredService<GitlabApi>();
                     var jobCache = context.RequestServices.GetRequiredService<IJobArtifactCache>();
   
                     using (var jobCacheSession = await jobCache.GetOrAddArtifacts(api.Projects
-                        .Project(projectContext.CurrentProject.Id)
-                        .Jobs.Job(projectContext.CurrentJob.Id)))
+                        .Project(pathContext.ProjectId)
+                        .Jobs.Job(pathContext.JobId)))
                     {
                         var fileProvider = new PhysicalFileProvider(Path.Combine(jobCacheSession.Directory, "public"));
                         var newBuild = appProjects.New();
