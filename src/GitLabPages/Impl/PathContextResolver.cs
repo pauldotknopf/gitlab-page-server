@@ -10,7 +10,7 @@ using Microsoft.Extensions.Options;
 
 namespace GitLabPages.Impl
 {
-    public class PathContextResolver : IPathContextResolver
+    public class PathContextResolver : IJobContextResolver
     {
         readonly GitlabApi _api;
         readonly GitLabPagesOptions _options;
@@ -25,7 +25,7 @@ namespace GitLabPages.Impl
             _cache = cache;
         }
         
-        public async Task<Tuple<string, PathContext>> ResolveContext(string path)
+        public async Task<JobContext> ResolveContext(string path)
         {
             var parts = path.Split(new[]{'/'}, StringSplitOptions.RemoveEmptyEntries);
 
@@ -59,11 +59,11 @@ namespace GitLabPages.Impl
 
             if (job != null)
             {
-                return new Tuple<string, PathContext>(
+                return new JobContext(
+                    project.Id,
+                    job.Id,
                     $"/{current}",
-                    new PathContext(
-                        project.Id,
-                        job.Id)
+                    path.Substring(current.Length)
                 );
             }
             

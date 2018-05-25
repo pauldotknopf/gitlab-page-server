@@ -22,39 +22,39 @@ namespace GitLabPages.Web.Middleware
         readonly RequestDelegate _next;
         readonly RequestDelegate _action;
         readonly GitlabApi _api;
-        readonly IPathContextResolver _pathContextResolver;
+        readonly IJobContextResolver _jobContextResolver;
         readonly GitLabPagesOptions _options;
 
         public ProjectMiddleware(RequestDelegate next,
             RequestDelegate action,
             GitlabApi api,
-            IPathContextResolver pathContextResolver,
+            IJobContextResolver jobContextResolver,
             IOptions<GitLabPagesOptions> options)
         {
             _next = next;
             _action = action;
             _api = api;
-            _pathContextResolver = pathContextResolver;
+            _jobContextResolver = jobContextResolver;
             _options = options.Value;
         }
 
         public async Task InvokeAsync(HttpContext context)
         {
-            var pathContext = await _pathContextResolver.ResolveContext(
+            var jobContext = await _jobContextResolver.ResolveContext(
                 context.Request.Path);
 
-            if (pathContext == null)
+            if (jobContext == null)
             {
                 await _next(context);
                 return;
             }
 
-            context.Items["_pathContext"] = pathContext.Item2;
+            context.Items["_jobContext"] = jobContext;
             
             var options = new MapOptions
             {
                 Branch = _action,
-                PathMatch = pathContext.Item1
+                PathMatch = jobContext.BasePath
             };
                         
             await new MapMiddleware(_next, options).Invoke(context);

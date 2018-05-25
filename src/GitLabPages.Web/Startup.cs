@@ -24,7 +24,7 @@ namespace GitLabPages.Web
         {
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddSingleton<IJobArtifactCache, Impl.JobArtifactCache>();
-            services.AddSingleton<IPathContextResolver, Impl.PathContextResolver>();
+            services.AddSingleton<IJobContextResolver, Impl.PathContextResolver>();
             services.Configure<GitLabPagesOptions>(options => { });
             services.Configure<GitlabApiOptions>(options => { });
             services.AddSingleton<GitlabApi>();
@@ -50,13 +50,13 @@ namespace GitLabPages.Web
             {
                 appProjects.Run(async (context) =>
                 {
-                    var pathContext = (PathContext)context.Items["_pathContext"];
+                    var jobContext = (JobContext)context.Items["_jobContext"];
                     var api = context.RequestServices.GetRequiredService<GitlabApi>();
                     var jobCache = context.RequestServices.GetRequiredService<IJobArtifactCache>();
   
                     using (var jobCacheSession = await jobCache.GetOrAddArtifacts(api.Projects
-                        .Project(pathContext.ProjectId)
-                        .Jobs.Job(pathContext.JobId)))
+                        .Project(jobContext.ProjectId)
+                        .Jobs.Job(jobContext.JobId)))
                     {
                         var fileProvider = new PhysicalFileProvider(Path.Combine(jobCacheSession.Directory, "public"));
                         var newBuild = appProjects.New();

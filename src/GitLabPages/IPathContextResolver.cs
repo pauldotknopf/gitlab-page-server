@@ -3,8 +3,8 @@ using System.Threading.Tasks;
 
 namespace GitLabPages
 {
-    public interface IPathContextResolver
+    public interface IJobContextResolver
     {
-        Task<Tuple<string, PathContext>> ResolveContext(string path);
+        Task<JobContext> ResolveContext(string path);
     }
 }
