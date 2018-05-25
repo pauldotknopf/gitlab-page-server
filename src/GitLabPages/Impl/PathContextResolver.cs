@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Threading.Tasks;
 using GitLabPages.Api;
 using GitLabPages.Api.Requests;
 using GitLabPages.Api.Types;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 
 namespace GitLabPages.Impl
@@ -12,12 +14,15 @@ namespace GitLabPages.Impl
     {
         readonly GitlabApi _api;
         readonly GitLabPagesOptions _options;
+        readonly IMemoryCache _cache;
         
         public PathContextResolver(IOptions<GitLabPagesOptions> options,
-            GitlabApi api)
+            GitlabApi api,
+            IMemoryCache cache)
         {
             _api = api;
             _options = options.Value;
+            _cache = cache;
         }
         
         public async Task<Tuple<string, PathContext>> ResolveContext(string path)
@@ -34,7 +39,7 @@ namespace GitLabPages.Impl
                 else
                     current += $"/{part}";
 
-                project = await _api.Projects.Project(current).Get();
+                project = await LookupProjectById(current);
                 
                 if(project != null) break;
             }
@@ -44,43 +49,68 @@ namespace GitLabPages.Impl
                 // No path was found. Let's try to treat the path as the root project.
                 if(!string.IsNullOrEmpty(_options.RootProject))
                 {
-                    project = await _api.Projects.Project(_options.RootProject).Get();
+                    project = await LookupProjectById(_options.RootProject);
                 }
             }
 
             if (project == null) return null;
-            
-            // Let's try to get the latest succesful pipeline.
-            var pipeline = (await _api.Projects.Project(project.Id)
-                    .Pipelines.Get(new PipelinesRequest
-                    {
-                        Ref = "master",
-                        Status = "success"
-                    }))
-                .FirstOrDefault();
 
-            if (pipeline == null) return null;
+            var job = await LookupJobByByProject(project.Id.ToString());
 
-            // Try to get the pages job.
-
-            var jobs = await _api.Projects.Project(project.Id)
-                .Pipelines.Pipeline(pipeline.Id)
-                .Jobs.Get();
-
-            var pagesJob = jobs.FirstOrDefault(x => x.Name == "pages");
-
-            if (pagesJob != null)
+            if (job != null)
             {
                 return new Tuple<string, PathContext>(
                     $"/{current}",
                     new PathContext(
                         project.Id,
-                        pipeline.Id,
-                        pagesJob.Id)
+                        job.Id)
                 );
             }
-
+            
             return null;
+        }
+
+        async Task<Project> LookupProjectById(string projectId)
+        {
+            if (_cache.TryGetValue($"project-{projectId}", out Project project))
+            {
+                return project;
+            }
+            
+            // Let's see if we can find it through the API.
+            project = await _api.Projects.Project(projectId).Get();
+
+            return _cache.Set($"project-{projectId}", project, new MemoryCacheEntryOptions()
+                .SetSlidingExpiration(TimeSpan.FromSeconds(30)));
+        }
+
+        async Task<Job> LookupJobByByProject(string projectId)
+        {
+            if (_cache.TryGetValue($"job-{projectId}", out Job job))
+            {
+                return job;
+            }
+            
+            // Let's try to get the latest succesful pipeline.
+            var pipeline = (await _api.Projects.Project(projectId)
+                .Pipelines.Get(new PipelinesRequest
+                {
+                    Ref = "master",
+                    Status = "success"
+                }))
+                .FirstOrDefault();
+
+            if (pipeline != null)
+            {
+                var jobs = await _api.Projects.Project(projectId)
+                    .Pipelines.Pipeline(pipeline.Id)
+                    .Jobs.Get();
+
+                job = jobs.FirstOrDefault(x => x.Name == "pages");
+            }
+            
+            return _cache.Set($"job-{projectId}", job, new MemoryCacheEntryOptions()
+                .SetSlidingExpiration(TimeSpan.FromSeconds(30)));
         }
     }
 }
