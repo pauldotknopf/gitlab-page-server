@@ -27,21 +27,26 @@ namespace GitLabPages.Impl
         
         public async Task<JobContext> ResolveContext(string path)
         {
-            var parts = path.Split(new[]{'/'}, StringSplitOptions.RemoveEmptyEntries);
-
-            Project project = null;
-            
-            var current = "";
-            foreach (var part in parts)
+            if (string.IsNullOrEmpty(path) || !path.StartsWith("/"))
             {
-                if (string.IsNullOrEmpty(current))
-                    current += part;
-                else
-                    current += $"/{part}";
+                throw new ArgumentOutOfRangeException(nameof(path));
+            }
+            
+            Project project = null;
+            // Skip first slash
+            var currentIndex = 1;
+            var current = "/";
+            var currentIteraton = 0;
+            while (currentIteraton <= _options.MaxParentGroups && project == null)
+            {
+                currentIteraton++;
+                var nextSlash = path.IndexOf("/", currentIndex + 1, StringComparison.OrdinalIgnoreCase);
+                if (nextSlash == -1) break;
+                var nextHunk = path.Substring(currentIndex, nextSlash - currentIndex);
+                current += nextHunk;
+                currentIndex += nextHunk.Length;
 
-                project = await LookupProjectById(current);
-                
-                if(project != null) break;
+                project = await LookupProjectById(current.Substring(1));
             }
 
             if (project == null)
@@ -50,9 +55,10 @@ namespace GitLabPages.Impl
                 if(!string.IsNullOrEmpty(_options.RootProject))
                 {
                     project = await LookupProjectById(_options.RootProject);
+                    currentIndex = 0;
                 }
             }
-
+            
             if (project == null) return null;
 
             var job = await LookupJobByByProject(project.Id.ToString());
@@ -62,7 +68,7 @@ namespace GitLabPages.Impl
                 return new JobContext(
                     project.Id,
                     job.Id,
-                    $"/{current}",
+                    current,
                     path.Substring(current.Length)
                 );
             }
