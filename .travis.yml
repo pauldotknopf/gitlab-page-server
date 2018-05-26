@@ -1,0 +1,11 @@
+sudo: required
+language: csharp
+mono: none
+dotnet: 2.1.200
+if: tag IS blank
+services:
+  - docker
+before_install:
+  - git fetch --unshallow || true
+script:
+  - ./build.sh ci

@@ -4,7 +4,6 @@ using System.IO.Compression;
 using System.Threading;
 using System.Threading.Tasks;
 using GitLabPages.Api;
-using GitLabPages.Api.Modules;
 using Microsoft.Extensions.Options;
 
 namespace GitLabPages.Impl
@@ -68,7 +67,7 @@ namespace GitLabPages.Impl
                         
                         return new JobArtifactSession(jobPath);
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                         Directory.Delete(jobPath, true);
                         throw;

@@ -6,6 +6,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GitLabPages", "src\GitLabPa
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GitLabPages.Web", "src\GitLabPages.Web\GitLabPages.Web.csproj", "{B51F68EC-C975-4030-A2D0-6BF6EF0EC657}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{4412883F-3E91-48F4-8B00-157F5E369D93}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Build", "build\scripts\Build.csproj", "{E6419493-8B9D-4ECF-8401-71553A7E5293}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -14,6 +18,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{31896A8B-82FA-4231-9FA7-63B18EBAD955} = {2F930A32-905B-4FAF-86A2-E31FF3DF964D}
 		{B51F68EC-C975-4030-A2D0-6BF6EF0EC657} = {2F930A32-905B-4FAF-86A2-E31FF3DF964D}
+		{E6419493-8B9D-4ECF-8401-71553A7E5293} = {4412883F-3E91-48F4-8B00-157F5E369D93}
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{31896A8B-82FA-4231-9FA7-63B18EBAD955}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -24,5 +29,9 @@ Global
 		{B51F68EC-C975-4030-A2D0-6BF6EF0EC657}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B51F68EC-C975-4030-A2D0-6BF6EF0EC657}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B51F68EC-C975-4030-A2D0-6BF6EF0EC657}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E6419493-8B9D-4ECF-8401-71553A7E5293}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E6419493-8B9D-4ECF-8401-71553A7E5293}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E6419493-8B9D-4ECF-8401-71553A7E5293}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E6419493-8B9D-4ECF-8401-71553A7E5293}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
