@@ -36,7 +36,7 @@ namespace GitLabPages.Api.Types
         public string FinishedAt { get; set; }
 
         [JsonProperty("duration")]
-        public double Duration { get; set; }
+        public double? Duration { get; set; }
 
         [JsonProperty("user")]
         public Types.User User { get; set; }

@@ -41,7 +41,12 @@ namespace GitLabPages.Impl
             var currentIndex = 1;
             var current = "/";
             var currentIteraton = 0;
-            while (currentIteraton <= _options.MaxParentGroups && project == null)
+            var maxIterations = 2;
+            if (_options.AdditionalParentGroups > 0)
+            {
+                maxIterations += _options.AdditionalParentGroups;
+            }
+            while (currentIteraton < maxIterations && project == null)
             {
                 currentIteraton++;
                 var nextSlash = path.IndexOf("/", currentIndex + 1, StringComparison.OrdinalIgnoreCase);
@@ -50,7 +55,8 @@ namespace GitLabPages.Impl
                 current += nextHunk;
                 currentIndex += nextHunk.Length;
 
-                project = await LookupProjectById(current.Substring(1));
+                if(currentIteraton != 1) // Don't lookup for glob, it's just a group.
+                    project = await LookupProjectById(current.Substring(1));
             }
             
             if (project == null)
@@ -180,9 +186,12 @@ namespace GitLabPages.Impl
             
             var jobs = await _api.Projects.Project(projectId)
                 .Pipelines.Pipeline(pipelineId)
-                .Jobs.Get();
+                .Jobs.Get(new JobsRequest
+                {
+                    Scope = "success"
+                });
 
-            job = jobs.FirstOrDefault(x => x.Name == _options.BuildJobName);
+            job = jobs.LastOrDefault(x => x.Name == _options.BuildJobName);
 
             return _cache.Set(key, job, BuildMemoryCacheOptions());
         }

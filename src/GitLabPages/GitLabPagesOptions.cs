@@ -4,7 +4,7 @@
     {
         public GitLabPagesOptions()
         {
-            MaxParentGroups = 1;
+            AdditionalParentGroups = 0; /* By default, only "group/project" will be resolved. */
             ArtifactsCacheDirectory = "artifacts";
             JobArtifactsBasePath = "public";
             RepositoryBranch = "master";
@@ -15,7 +15,7 @@
         
         public string RootProject { get; set; }
         
-        public int MaxParentGroups { get; set; }
+        public int AdditionalParentGroups { get; set; }
         
         public string ArtifactsCacheDirectory { get; set; }
         
