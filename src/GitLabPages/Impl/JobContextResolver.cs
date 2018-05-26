@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using GitLabPages.Api;
 using GitLabPages.Api.Requests;
@@ -48,7 +49,7 @@ namespace GitLabPages.Impl
 
                 project = await LookupProjectById(current.Substring(1));
             }
-
+            
             if (project == null)
             {
                 // No path was found. Let's try to treat the path as the root project.
@@ -61,6 +62,25 @@ namespace GitLabPages.Impl
             
             if (project == null) return null;
 
+            // This is /index.html, or w/e.
+            var artifactPath = path.Substring(current.Length);
+            
+            // Just to see if this is a reference to a specific job's artifacts
+            // -\/job\/[0-9]+(?:\/)
+            var match = Regex.Match(artifactPath, @"\/-\/job\/([0-9])+(?:\/)");
+            if (match.Success)
+            {
+                var jobId = int.Parse(match.Groups[1].Value);
+                current += match.Value.Substring(0, match.Value.Length - 1);
+                artifactPath = path.Substring(current.Length);
+                return new JobContext(
+                    project.Id,
+                    jobId,
+                    current,
+                    artifactPath
+                );
+            }
+            
             var job = await LookupJobByByProject(project.Id.ToString());
 
             if (job != null)
@@ -69,7 +89,7 @@ namespace GitLabPages.Impl
                     project.Id,
                     job.Id,
                     current,
-                    path.Substring(current.Length)
+                    artifactPath
                 );
             }
             
