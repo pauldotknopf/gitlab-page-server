@@ -36,11 +36,11 @@ namespace GitLabPages.Api
                 {
                     using (var response = await client.PostAsync($"/api/v4{url}", input))
                     {
+                        if(!response.IsSuccessStatusCode)
+                            throw new ApiRequestException(string.Empty, response.StatusCode);
                         using (var output = response.Content)
                         {
-                            var json = await output.ReadAsStringAsync();
-                            Debug.WriteLine(json);
-                            return JsonConvert.DeserializeObject<T>(json);
+                            return JsonConvert.DeserializeObject<T>(await output.ReadAsStringAsync());
                         }
                     }
                 }
@@ -58,11 +58,11 @@ namespace GitLabPages.Api
                 {
                     using (var response = await client.PutAsync($"/api/v4{url}", input))
                     {
+                        if(!response.IsSuccessStatusCode)
+                            throw new ApiRequestException(string.Empty, response.StatusCode);
                         using (var output = response.Content)
                         {
-                            var json = await output.ReadAsStringAsync();
-                            Debug.WriteLine(json);
-                            return JsonConvert.DeserializeObject<T>(json);
+                            return JsonConvert.DeserializeObject<T>(await output.ReadAsStringAsync());
                         }
                     }
                 }
@@ -114,9 +114,7 @@ namespace GitLabPages.Api
                         throw new ApiRequestException(string.Empty, response.StatusCode);
                     using (var content = response.Content)
                     {
-                        var json = await content.ReadAsStringAsync();
-                        Debug.WriteLine(json);
-                        return JsonConvert.DeserializeObject<T>(json);
+                        return JsonConvert.DeserializeObject<T>(await content.ReadAsStringAsync());
                     }
                 }
             }
