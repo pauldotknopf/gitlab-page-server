@@ -68,6 +68,7 @@ namespace GitLabPages.Api.Hooks
             
             public class Commit
             {
+                [JsonProperty("id")]
                 public int Id { get; set; }
                 
                 [JsonProperty("sha")]

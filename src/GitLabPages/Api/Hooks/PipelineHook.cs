@@ -52,7 +52,7 @@ namespace GitLabPages.Api.Hooks
                 public string FinishedAt { get; set; }
                 
                 [JsonProperty("duration")]
-                public int Duration { get; set; }
+                public ulong? Duration { get; set; }
             }
 
             public class User

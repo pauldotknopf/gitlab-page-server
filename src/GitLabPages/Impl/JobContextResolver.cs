@@ -2,12 +2,14 @@
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using GitLabPages.Api;
 using GitLabPages.Api.Requests;
 using GitLabPages.Api.Types;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Primitives;
 
 namespace GitLabPages.Impl
 {
@@ -16,7 +18,8 @@ namespace GitLabPages.Impl
         readonly GitlabApi _api;
         readonly GitLabPagesOptions _options;
         readonly IMemoryCache _cache;
-        
+        CancellationTokenSource _resetCacheToken = new CancellationTokenSource();
+
         public JobContextResolver(IOptions<GitLabPagesOptions> options,
             GitlabApi api,
             IMemoryCache cache)
@@ -84,7 +87,7 @@ namespace GitLabPages.Impl
                 var pipelineId = int.Parse(match.Groups[1].Value);
                 current += match.Value.Substring(0, match.Value.Length - 1);
                 artifactPath = path.Substring(current.Length);
-                var pipelineJob = await LookupJobByPipeline(project.Id.ToString(), pipelineId);
+                var pipelineJob = await LookupJobByPipelineId(project.Id.ToString(), pipelineId);
                 if (pipelineJob != null)
                 {
                     return new JobContext(
@@ -100,7 +103,7 @@ namespace GitLabPages.Impl
 
             if (pipeline == null) return null;
 
-            var job = await LookupJobByPipeline(project.Id.ToString(), pipeline.Id);
+            var job = await LookupJobByPipelineId(project.Id.ToString(), pipeline.Id);
             
             if (job != null)
             {
@@ -115,9 +118,14 @@ namespace GitLabPages.Impl
             return null;
         }
 
-        async Task<Project> LookupProjectById(string projectId)
+        public string LookupProjectByIdCacheKey(string projectId)
         {
-            var key = $"project-{projectId}";
+            return $"project-{projectId}";
+        }
+        
+        public async Task<Project> LookupProjectById(string projectId)
+        {
+            var key = LookupProjectByIdCacheKey(projectId);
             
             if (_cache.TryGetValue(key, out Project project))
             {
@@ -127,13 +135,17 @@ namespace GitLabPages.Impl
             // Let's see if we can find it through the API.
             project = await _api.Projects.Project(projectId).Get();
 
-            return _cache.Set($"project-{projectId}", project, new MemoryCacheEntryOptions()
-                .SetSlidingExpiration(TimeSpan.FromSeconds(30)));
+            return _cache.Set(key, project, BuildMemoryCacheOptions());
         }
 
-        async Task<Pipeline> LookupPipelineByProjectId(string projectId)
+        public string LookupPipelineByProjectIdCacheKey(string projectId)
         {
-            var key = $"pipeline-for-project-{projectId}";
+            return $"pipeline-for-project-{projectId}";
+        }
+        
+        public async Task<Pipeline> LookupPipelineByProjectId(string projectId)
+        {
+            var key = LookupPipelineByProjectIdCacheKey(projectId);
             
             if (_cache.TryGetValue(key, out Pipeline pipeline))
             {
@@ -144,18 +156,22 @@ namespace GitLabPages.Impl
             pipeline = (await _api.Projects.Project(projectId)
                     .Pipelines.Get(new PipelinesRequest
                     {
-                        Ref = "master",
+                        Ref = _options.RepositoryBranch,
                         Status = "success"
                     }))
                 .FirstOrDefault();
 
-            return _cache.Set(key, pipeline, new MemoryCacheEntryOptions()
-                .SetSlidingExpiration(TimeSpan.FromSeconds(30)));
+            return _cache.Set(key, pipeline, BuildMemoryCacheOptions());
         }
 
-        async Task<Job> LookupJobByPipeline(string projectId, int pipelineId)
+        public string LookupJobByPipelineIdCacheKey(string projectId, int pipelineId)
         {
-            var key = $"job-for-pipeline-{projectId}-{pipelineId}";
+            return $"job-for-pipeline-{projectId}-{pipelineId}";
+        }
+        
+        public async Task<Job> LookupJobByPipelineId(string projectId, int pipelineId)
+        {
+            var key = LookupJobByPipelineIdCacheKey(projectId, pipelineId);
             
             if (_cache.TryGetValue(key, out Job job))
             {
@@ -166,10 +182,28 @@ namespace GitLabPages.Impl
                 .Pipelines.Pipeline(pipelineId)
                 .Jobs.Get();
 
-            job = jobs.FirstOrDefault(x => x.Name == "pages");
+            job = jobs.FirstOrDefault(x => x.Name == _options.BuildJobName);
 
-            return _cache.Set(key, job, new MemoryCacheEntryOptions()
-                .SetSlidingExpiration(TimeSpan.FromSeconds(30)));
+            return _cache.Set(key, job, BuildMemoryCacheOptions());
+        }
+        
+        public void ClearCache()
+        {
+            var resetToken = _resetCacheToken;
+            _resetCacheToken = new CancellationTokenSource();
+            
+            if (resetToken != null && !resetToken.IsCancellationRequested && resetToken.Token.CanBeCanceled)
+            {
+                resetToken.Cancel();
+                resetToken.Dispose();
+            }
+        }
+
+        private MemoryCacheEntryOptions BuildMemoryCacheOptions()
+        {
+            return new MemoryCacheEntryOptions()
+                .SetSlidingExpiration(TimeSpan.FromSeconds(30))
+                .AddExpirationToken(new CancellationChangeToken(_resetCacheToken.Token));
         }
     }
 }
