@@ -17,25 +17,19 @@ namespace GitLabPages.Web.Middleware
     ///  2nd /parent-group/another-group
     ///  3rd /parent-group/another-group/project -- this is matched
     /// </summary>
-    public class ProjectMiddleware
+    public class JobContextMiddleware
     {
         readonly RequestDelegate _next;
         readonly RequestDelegate _action;
-        readonly GitlabApi _api;
         readonly IJobContextResolver _jobContextResolver;
-        readonly GitLabPagesOptions _options;
 
-        public ProjectMiddleware(RequestDelegate next,
+        public JobContextMiddleware(RequestDelegate next,
             RequestDelegate action,
-            GitlabApi api,
-            IJobContextResolver jobContextResolver,
-            IOptions<GitLabPagesOptions> options)
+            IJobContextResolver jobContextResolver)
         {
             _next = next;
             _action = action;
-            _api = api;
             _jobContextResolver = jobContextResolver;
-            _options = options.Value;
         }
 
         public async Task InvokeAsync(HttpContext context)

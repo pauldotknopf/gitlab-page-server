@@ -24,7 +24,7 @@ namespace GitLabPages.Web
         {
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddSingleton<IJobArtifactCache, Impl.JobArtifactCache>();
-            services.AddSingleton<IJobContextResolver, Impl.PathContextResolver>();
+            services.AddSingleton<IJobContextResolver, Impl.JobContextResolver>();
             services.Configure<GitLabPagesOptions>(options => { });
             services.Configure<GitlabApiOptions>(options => { });
             services.AddSingleton<GitlabApi>();
@@ -46,32 +46,10 @@ namespace GitLabPages.Web
                 });
             });
             
-            app.UseProjects(appProjects =>
+            app.UseJobContext(jobApp =>
             {
-                appProjects.Run(async (context) =>
-                {
-                    var jobContext = (JobContext)context.Items["_jobContext"];
-                    var api = context.RequestServices.GetRequiredService<GitlabApi>();
-                    var jobCache = context.RequestServices.GetRequiredService<IJobArtifactCache>();
-  
-                    using (var jobCacheSession = await jobCache.GetOrAddArtifacts(api.Projects
-                        .Project(jobContext.ProjectId)
-                        .Jobs.Job(jobContext.JobId)))
-                    {
-                        var fileProvider = new PhysicalFileProvider(Path.Combine(jobCacheSession.Directory, "public"));
-                        var newBuild = appProjects.New();
-                        newBuild.UseDefaultFiles(new DefaultFilesOptions
-                        {
-                            FileProvider = fileProvider
-                        });
-                        newBuild.UseStaticFiles(new StaticFileOptions
-                        {
-                            FileProvider = fileProvider
-                        });
-                        var requestMethod = newBuild.Build();
-                        await requestMethod.Invoke(context);
-                    }
-                });
+                // This will serve the jobs as static content
+                jobApp.UseJobArtifacts();
             });
         }
     }

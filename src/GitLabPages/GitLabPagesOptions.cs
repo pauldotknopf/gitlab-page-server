@@ -6,6 +6,7 @@
         {
             MaxParentGroups = 1;
             ArtifactsCacheDirectory = "artifacts";
+            JobArtifactsBasePath = "public";
         }
         
         public string SecretToken { get; set; }
@@ -15,5 +16,7 @@
         public int MaxParentGroups { get; set; }
         
         public string ArtifactsCacheDirectory { get; set; }
+        
+        public string JobArtifactsBasePath { get; set; }
     }
 }

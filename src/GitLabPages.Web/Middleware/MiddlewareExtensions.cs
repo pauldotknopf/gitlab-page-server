@@ -5,14 +5,19 @@ namespace GitLabPages.Web.Middleware
 {
     public static class MiddlewareExtensions
     {
-        public static void UseProjects(this IApplicationBuilder app, Action<IApplicationBuilder> configuration)
+        public static void UseJobContext(this IApplicationBuilder app, Action<IApplicationBuilder> configuration)
         {
             var newApp = app.New();
             configuration(newApp);
 
             var requestMethod = newApp.Build();
             
-            app.UseMiddleware<ProjectMiddleware>(requestMethod);
+            app.UseMiddleware<JobContextMiddleware>(requestMethod);
+        }
+
+        public static void UseJobArtifacts(this IApplicationBuilder app)
+        {
+            app.UseMiddleware<JobArtifactsMiddleware>();
         }
     }
 }

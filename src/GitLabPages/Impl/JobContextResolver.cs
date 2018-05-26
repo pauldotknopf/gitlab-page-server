@@ -10,13 +10,13 @@ using Microsoft.Extensions.Options;
 
 namespace GitLabPages.Impl
 {
-    public class PathContextResolver : IJobContextResolver
+    public class JobContextResolver : IJobContextResolver
     {
         readonly GitlabApi _api;
         readonly GitLabPagesOptions _options;
         readonly IMemoryCache _cache;
         
-        public PathContextResolver(IOptions<GitLabPagesOptions> options,
+        public JobContextResolver(IOptions<GitLabPagesOptions> options,
             GitlabApi api,
             IMemoryCache cache)
         {
