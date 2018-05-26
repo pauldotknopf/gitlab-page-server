@@ -56,7 +56,6 @@ namespace GitLabPages.Impl
                 if(!string.IsNullOrEmpty(_options.RootProject))
                 {
                     project = await LookupProjectById(_options.RootProject);
-                    currentIndex = 0;
                 }
             }
             
@@ -65,8 +64,6 @@ namespace GitLabPages.Impl
             // This is /index.html, or w/e.
             var artifactPath = path.Substring(current.Length);
             
-            // Just to see if this is a reference to a specific job's artifacts
-            // -\/job\/[0-9]+(?:\/)
             var match = Regex.Match(artifactPath, @"\/-\/job\/([0-9])+(?:\/)");
             if (match.Success)
             {
@@ -81,8 +78,30 @@ namespace GitLabPages.Impl
                 );
             }
             
-            var job = await LookupJobByByProject(project.Id.ToString());
+            match = Regex.Match(artifactPath, @"\/-\/pipeline\/([0-9])+(?:\/)");
+            if (match.Success)
+            {
+                var pipelineId = int.Parse(match.Groups[1].Value);
+                current += match.Value.Substring(0, match.Value.Length - 1);
+                artifactPath = path.Substring(current.Length);
+                var pipelineJob = await LookupJobByPipeline(project.Id.ToString(), pipelineId);
+                if (pipelineJob != null)
+                {
+                    return new JobContext(
+                        project.Id,
+                        pipelineJob.Id,
+                        current,
+                        artifactPath
+                    );
+                }
+            }
 
+            var pipeline = await LookupPipelineByProjectId(project.Id.ToString());
+
+            if (pipeline == null) return null;
+
+            var job = await LookupJobByPipeline(project.Id.ToString(), pipeline.Id);
+            
             if (job != null)
             {
                 return new JobContext(
@@ -98,7 +117,9 @@ namespace GitLabPages.Impl
 
         async Task<Project> LookupProjectById(string projectId)
         {
-            if (_cache.TryGetValue($"project-{projectId}", out Project project))
+            var key = $"project-{projectId}";
+            
+            if (_cache.TryGetValue(key, out Project project))
             {
                 return project;
             }
@@ -110,32 +131,44 @@ namespace GitLabPages.Impl
                 .SetSlidingExpiration(TimeSpan.FromSeconds(30)));
         }
 
-        async Task<Job> LookupJobByByProject(string projectId)
+        async Task<Pipeline> LookupPipelineByProjectId(string projectId)
         {
-            if (_cache.TryGetValue($"job-{projectId}", out Job job))
+            var key = $"pipeline-for-project-{projectId}";
+            
+            if (_cache.TryGetValue(key, out Pipeline pipeline))
+            {
+                return pipeline;
+            }
+            
+            // Let's try to get the latest succesful pipeline.
+            pipeline = (await _api.Projects.Project(projectId)
+                    .Pipelines.Get(new PipelinesRequest
+                    {
+                        Ref = "master",
+                        Status = "success"
+                    }))
+                .FirstOrDefault();
+
+            return _cache.Set(key, pipeline, new MemoryCacheEntryOptions()
+                .SetSlidingExpiration(TimeSpan.FromSeconds(30)));
+        }
+
+        async Task<Job> LookupJobByPipeline(string projectId, int pipelineId)
+        {
+            var key = $"job-for-pipeline-{projectId}-{pipelineId}";
+            
+            if (_cache.TryGetValue(key, out Job job))
             {
                 return job;
             }
             
-            // Let's try to get the latest succesful pipeline.
-            var pipeline = (await _api.Projects.Project(projectId)
-                .Pipelines.Get(new PipelinesRequest
-                {
-                    Ref = "master",
-                    Status = "success"
-                }))
-                .FirstOrDefault();
+            var jobs = await _api.Projects.Project(projectId)
+                .Pipelines.Pipeline(pipelineId)
+                .Jobs.Get();
 
-            if (pipeline != null)
-            {
-                var jobs = await _api.Projects.Project(projectId)
-                    .Pipelines.Pipeline(pipeline.Id)
-                    .Jobs.Get();
+            job = jobs.FirstOrDefault(x => x.Name == "pages");
 
-                job = jobs.FirstOrDefault(x => x.Name == "pages");
-            }
-            
-            return _cache.Set($"job-{projectId}", job, new MemoryCacheEntryOptions()
+            return _cache.Set(key, job, new MemoryCacheEntryOptions()
                 .SetSlidingExpiration(TimeSpan.FromSeconds(30)));
         }
     }
