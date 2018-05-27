@@ -10,7 +10,7 @@ A GitLab page server. Similar to the built-in page server, but with some additio
 
 ## Installation
 
-1. Run the server. Example `docker-compose.yml` file [here](build/docker/example/docker-compose.yml). Configurable options [here](todo).
+1. Run the server. Example `docker-compose.yml` file [here](build/docker/example/docker-compose.yml). Configurable options [here](#more-options).
    * At a bare minimum, you should have the following configured for things to work properly.
    ```
    {
