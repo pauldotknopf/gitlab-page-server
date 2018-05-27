@@ -49,7 +49,9 @@ namespace GitLabPages.Impl
             while (currentIteraton < maxIterations && project == null)
             {
                 currentIteraton++;
-                var nextSlash = path.IndexOf("/", currentIndex + 1, StringComparison.OrdinalIgnoreCase);
+                var nextSlash = path.Length > 1
+                    ? path.IndexOf("/", currentIndex + 1, StringComparison.OrdinalIgnoreCase)
+                    : -1;
                 if (nextSlash == -1) break;
                 var nextHunk = path.Substring(currentIndex, nextSlash - currentIndex);
                 current += nextHunk;

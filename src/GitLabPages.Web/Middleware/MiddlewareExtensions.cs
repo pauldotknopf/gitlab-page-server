@@ -17,7 +17,7 @@ namespace GitLabPages.Web.Middleware
 
         public static void UseJobArtifacts(this IApplicationBuilder app)
         {
-            app.UseMiddleware<JobArtifactsMiddleware>();
+            app.UseMiddleware<JobArtifactsMiddleware>(app);
         }
     }
 }
