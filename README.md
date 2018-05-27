@@ -27,6 +27,13 @@ A GitLab page server. Similar to the built-in page server, but with some additio
 
 That's it. Visit `your-domain.com/group/project` to serve your static pages.
 
+## Endpoints
+
+* `your-domain.com/` - Serves content from your configured
+* `your-domain.com/project/group/` - Serve content from default branch/job for the repository.
+* `your-domain.com/project/group/-/pipeline/1/` - Serve content from a specific pipeline. This is great for generating previews for merge requests.
+* `your-domain.com/project/group/-/job/1/` - Serve content from a single job, typically your `"BuildJobName"`, which is `pages` by default.
+
 ## More options
 
 ### Logging
@@ -56,6 +63,7 @@ That's it. Visit `your-domain.com/group/project` to serve your static pages.
     "JobArtifactsBasePath": "public",
     "RepositoryBranch": "master",
     "BuildJobName": "pages",
+    "RootProject": null,
     "CacheProjectType": "Sliding",
     "CacheProjectSeconds": 60,
     "CachePipelineType": "Sliding",
@@ -76,4 +84,5 @@ That's it. Visit `your-domain.com/group/project` to serve your static pages.
 * `"JobArtifactsBasePath"`: The directory within the download artifacts that content will be served from.
 * `"RepositoryBranch"`: The branch that the url `your-domain.com/group/project` will serve from.
 * `"BuildJobName"`: The name of the job that artifacts will be downloaded from, within a pipeline.
+* `"RootProject"`: The project that will be served when visiting `your-domain.com/`. This is great for giving your domain a landing page at the root.
 * `"Cache*"`: Various knobs for tuning caching. You likely won't need to change this. The web hooks will invalidate the cache when new artifacts are available.
