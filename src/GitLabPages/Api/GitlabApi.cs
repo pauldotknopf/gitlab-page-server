@@ -123,8 +123,8 @@ namespace GitLabPages.Api
         private HttpClient GetClient()
         {
             var client = new HttpClient();
-            client.BaseAddress = new Uri(_options.Url);
-            client.DefaultRequestHeaders.Add("Private-Token", _options.Token);
+            client.BaseAddress = new Uri(_options.ServerUrl);
+            client.DefaultRequestHeaders.Add("Private-Token", _options.AuthToken);
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             return client;
         }

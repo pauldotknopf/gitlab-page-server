@@ -124,12 +124,24 @@ namespace GitLabPages.Impl
             return null;
         }
 
-        public string LookupProjectByIdCacheKey(string projectId)
+        public void ClearCache()
+        {
+            var resetToken = _resetCacheToken;
+            _resetCacheToken = new CancellationTokenSource();
+            
+            if (resetToken != null && !resetToken.IsCancellationRequested && resetToken.Token.CanBeCanceled)
+            {
+                resetToken.Cancel();
+                resetToken.Dispose();
+            }
+        }
+        
+        string LookupProjectByIdCacheKey(string projectId)
         {
             return $"project-{projectId}";
         }
         
-        public async Task<Project> LookupProjectById(string projectId)
+        async Task<Project> LookupProjectById(string projectId)
         {
             var key = LookupProjectByIdCacheKey(projectId);
             
@@ -141,15 +153,17 @@ namespace GitLabPages.Impl
             // Let's see if we can find it through the API.
             project = await _api.Projects.Project(projectId).Get();
 
-            return _cache.Set(key, project, BuildMemoryCacheOptions());
+            return _options.CacheProjectType == GitLabPagesOptions.Types.CacheType.None
+                ? project
+                : _cache.Set(key, project, BuildMemoryCacheOptions(_options.CacheJobSeconds, _options.CacheJobType));
         }
 
-        public string LookupPipelineByProjectIdCacheKey(string projectId)
+        string LookupPipelineByProjectIdCacheKey(string projectId)
         {
             return $"pipeline-for-project-{projectId}";
         }
         
-        public async Task<Pipeline> LookupPipelineByProjectId(string projectId)
+        async Task<Pipeline> LookupPipelineByProjectId(string projectId)
         {
             var key = LookupPipelineByProjectIdCacheKey(projectId);
             
@@ -167,15 +181,17 @@ namespace GitLabPages.Impl
                     }))
                 .FirstOrDefault();
 
-            return _cache.Set(key, pipeline, BuildMemoryCacheOptions());
+            return _options.CachePipelineType == GitLabPagesOptions.Types.CacheType.None
+                ? pipeline
+                : _cache.Set(key, pipeline, BuildMemoryCacheOptions(_options.CachePipelineSeconds, _options.CachePipelineType));
         }
 
-        public string LookupJobByPipelineIdCacheKey(string projectId, int pipelineId)
+        string LookupJobByPipelineIdCacheKey(string projectId, int pipelineId)
         {
             return $"job-for-pipeline-{projectId}-{pipelineId}";
         }
         
-        public async Task<Job> LookupJobByPipelineId(string projectId, int pipelineId)
+        async Task<Job> LookupJobByPipelineId(string projectId, int pipelineId)
         {
             var key = LookupJobByPipelineIdCacheKey(projectId, pipelineId);
             
@@ -193,26 +209,30 @@ namespace GitLabPages.Impl
 
             job = jobs.LastOrDefault(x => x.Name == _options.BuildJobName);
 
-            return _cache.Set(key, job, BuildMemoryCacheOptions());
+            return _options.CacheJobType == GitLabPagesOptions.Types.CacheType.None
+                ? job
+                : _cache.Set(key, job, BuildMemoryCacheOptions(_options.CacheJobSeconds, _options.CacheJobType));
         }
         
-        public void ClearCache()
+        private MemoryCacheEntryOptions BuildMemoryCacheOptions(uint seconds, GitLabPagesOptions.Types.CacheType cacheType)
         {
-            var resetToken = _resetCacheToken;
-            _resetCacheToken = new CancellationTokenSource();
+            var options = new MemoryCacheEntryOptions();
             
-            if (resetToken != null && !resetToken.IsCancellationRequested && resetToken.Token.CanBeCanceled)
+            switch (cacheType)
             {
-                resetToken.Cancel();
-                resetToken.Dispose();
+                case GitLabPagesOptions.Types.CacheType.Absolute:
+                    options.SetAbsoluteExpiration(TimeSpan.FromSeconds(seconds));
+                    break;
+                case GitLabPagesOptions.Types.CacheType.Sliding:
+                    options.SetSlidingExpiration(TimeSpan.FromSeconds(seconds));
+                    break;
+                default:
+                    throw new InvalidOperationException();
             }
-        }
+            
+            options.AddExpirationToken(new CancellationChangeToken(_resetCacheToken.Token));
 
-        private MemoryCacheEntryOptions BuildMemoryCacheOptions()
-        {
-            return new MemoryCacheEntryOptions()
-                .SetSlidingExpiration(TimeSpan.FromSeconds(30))
-                .AddExpirationToken(new CancellationChangeToken(_resetCacheToken.Token));
+            return options;
         }
     }
 }

@@ -21,7 +21,9 @@ namespace GitLabPages.Web
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
-        {
+        {   
+            services.Configure<GitlabApiOptions>(Configuration.GetSection("Pages"));
+            services.Configure<GitLabPagesOptions>(Configuration.GetSection("Pages"));
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddSingleton<IJobArtifactCache, Impl.JobArtifactCache>();
             services.AddSingleton<IJobContextResolver, Impl.JobContextResolver>();

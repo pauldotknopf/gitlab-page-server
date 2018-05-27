@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
+using GitLabPages.Api;
 using GitLabPages.Api.Hooks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
@@ -13,25 +14,28 @@ namespace GitLabPages.Web.Controllers
 {
     public class HookController : Controller
     {
-        readonly GitLabPagesOptions _options;
+        readonly GitLabPagesOptions _pagesOptions;
+        private readonly GitlabApiOptions _apiOptions;
         readonly ILogger<HookController> _logger;
         readonly IJobContextResolver _jobContextResolver;
 
-        public HookController(IOptions<GitLabPagesOptions> options,
+        public HookController(IOptions<GitLabPagesOptions> pagesOptions,
+            IOptions<GitlabApiOptions> apiOptions,
             ILogger<HookController> logger,
             IJobContextResolver jobContextResolver)
         {
             _logger = logger;
             _jobContextResolver = jobContextResolver;
-            _options = options.Value;
+            _pagesOptions = pagesOptions.Value;
+            _apiOptions = apiOptions.Value;
         }
         
         public async Task<ActionResult> Index()
         {
-            if (!string.IsNullOrEmpty(_options.SecretToken))
+            if (!string.IsNullOrEmpty(_apiOptions.HookToken))
             {
                 // We are validating the sender knows our secret token.
-                if (_options.SecretToken != GetToken())
+                if (_apiOptions.HookToken != GetToken())
                 {
                     _logger.LogWarning("Invalid request, secret token didn't match");
                     return Unauthorized();
@@ -81,7 +85,7 @@ namespace GitLabPages.Web.Controllers
 
         private Task HandleBuildHook(BuildHook buildHook)
         {
-            if (buildHook.BuildName == _options.BuildJobName && buildHook.BuildStatus == "success")
+            if (buildHook.BuildName == _pagesOptions.BuildJobName && buildHook.BuildStatus == "success")
             {
                 // We ran a job that we may be using somewhere.
                 // TODO:
@@ -97,7 +101,7 @@ namespace GitLabPages.Web.Controllers
         {
             if (pipelineHook.ObjectAttributes.Status == "success")
             {
-                if (pipelineHook.ObjectAttributes.Ref == _options.RepositoryBranch)
+                if (pipelineHook.ObjectAttributes.Ref == _pagesOptions.RepositoryBranch)
                 {
                     // This pipeline may be a new static site for the project.
                     // TODO:
