@@ -1,4 +1,4 @@
-# gitlab-pages
+# gitlab-page-server
 
 A GitLab page server. Similar to the built-in page server, but with some additional features.
 
