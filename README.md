@@ -71,9 +71,9 @@ That's it. Visit `your-domain.com/group/project` to serve your static pages.
 * `"ServerUrl"`: You can point this to ```gitlab.com``` or your own hosted GitLab instance.
 * `"AuthToken"`: Generate this from your account settings.
 * `"HookToken"`: The secret token, configured in GitLab, for the web hook. This ensures that only GitLab can post to your hook.
-* `"AdditionalParentGroups"`: By default, all requests will attempt to match one parent group. Add more using this property. This allows you to have deep pages (`domain.com/parent-group/sub-group/another-sub-group/project`).
+* `"AdditionalParentGroups"`: By default, all requests will attempt to match one parent group. Add more using this property. This allows you to have deep pages (`your-domain.com/parent-group/sub-group/another-sub-group/project`).
 * `"ArtifactsCacheDirectory"`: The location where the artifacts will be cached on disk. This path is relative to the working directory.
 * `"JobArtifactsBasePath"`: The directory within the download artifacts that content will be served from.
-* `"RepositoryBranch"`: The branch that the url `group/project` will serve from.
+* `"RepositoryBranch"`: The branch that the url `your-domain.com/group/project` will serve from.
 * `"BuildJobName"`: The name of the job that artifacts will be downloaded from, within a pipeline.
 * `"Cache*"`: Various knobs for tuning caching. You likely won't need to change this. The web hooks will invalidate the cache when new artifacts are available.
