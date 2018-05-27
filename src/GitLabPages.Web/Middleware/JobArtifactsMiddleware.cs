@@ -7,22 +7,26 @@ using Microsoft.AspNetCore.Hosting.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Primitives;
 
 namespace GitLabPages.Web.Middleware
 {
     public class JobArtifactsMiddleware
     {
         readonly RequestDelegate _next;
+        readonly IApplicationBuilder _app;
         readonly GitlabApi _api;
         readonly IJobArtifactCache _jobArtifactCache;
         readonly GitLabPagesOptions _options;
 
         public JobArtifactsMiddleware(RequestDelegate next,
+            IApplicationBuilder app,
             GitlabApi api,
             IJobArtifactCache jobArtifactCache,
             IOptions<GitLabPagesOptions> options)
         {
             _next = next;
+            _app = app;
             _api = api;
             _jobArtifactCache = jobArtifactCache;
             _options = options.Value;
@@ -50,7 +54,7 @@ namespace GitLabPages.Web.Middleware
                     path = Path.Combine(path, _options.JobArtifactsBasePath);
                 }
 
-                var app = new ApplicationBuilderFactory(context.RequestServices).CreateBuilder(context.Features);
+                var app = _app.New();
                 
                 var fileProvider = new PhysicalFileProvider(path);
                 app.UseDefaultFiles(new DefaultFilesOptions

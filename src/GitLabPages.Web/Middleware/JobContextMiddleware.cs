@@ -48,7 +48,7 @@ namespace GitLabPages.Web.Middleware
             var options = new MapOptions
             {
                 Branch = _action,
-                PathMatch = jobContext.BasePath
+                PathMatch = jobContext.BasePath == "/" ? "" : jobContext.BasePath
             };
                         
             await new MapMiddleware(_next, options).Invoke(context);
