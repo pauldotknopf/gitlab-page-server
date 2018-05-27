@@ -1,0 +1,8 @@
+{
+  "Pages": {
+    "ServerUrl": "http://192.168.0.6",
+    "AuthToken": "AdNAuSLZxGvU1cHycNxU",
+    "HookToken": "",
+    "ArtifactsCacheDirectory": "/artifacts"
+  }
+}
