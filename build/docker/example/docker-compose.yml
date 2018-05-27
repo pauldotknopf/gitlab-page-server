@@ -1,0 +1,11 @@
+version: '3'
+services:
+  gitlab-pages:
+    image: pauldotknopf/gitlab-pages:build
+    volumes:
+       - artifacts:/artifacts
+       - ./data:/work
+    ports:
+     - "5000:5000"
+volumes:
+  artifacts:
