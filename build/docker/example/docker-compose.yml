@@ -1,7 +1,7 @@
 version: '3'
 services:
   gitlab-pages:
-    image: pauldotknopf/gitlab-pages:build
+    image: pauldotknopf/gitlab-pages:latest
     volumes:
        - artifacts:/artifacts
        - ./data:/work
