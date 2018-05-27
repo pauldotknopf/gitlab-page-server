@@ -29,7 +29,7 @@ That's it. Visit `your-domain.com/group/project` to serve your static pages.
 
 ## Endpoints
 
-* `your-domain.com/` - Serves content from your configured
+* `your-domain.com/` - Serves content from your configured `"RootProject"`.
 * `your-domain.com/project/group/` - Serve content from default branch/job for the repository.
 * `your-domain.com/project/group/-/pipeline/1/` - Serve content from a specific pipeline. This is great for generating previews for merge requests.
 * `your-domain.com/project/group/-/job/1/` - Serve content from a single job, typically your `"BuildJobName"`, which is `pages` by default.
