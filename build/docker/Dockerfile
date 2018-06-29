@@ -1,4 +1,4 @@
-FROM microsoft/dotnet:2.1.300-rc1-sdk-bionic
+FROM microsoft/dotnet:2.1.300-sdk-bionic
 ADD gitlab-pages/linux-x64 /gitlab-pages
 ENV ASPNETCORE_URLS "http://*:5000"
 RUN mkdir /work

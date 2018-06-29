@@ -75,7 +75,7 @@ namespace GitLabPages.Impl
             // This is /index.html, or w/e.
             var artifactPath = path.Substring(current.Length);
             
-            var match = Regex.Match(artifactPath, @"\/-\/job\/([0-9])+(?:\/)");
+            var match = Regex.Match(artifactPath, @"\/-\/job\/([0-9]+)(?:\/)");
             if (match.Success)
             {
                 var jobId = int.Parse(match.Groups[1].Value);
@@ -89,7 +89,7 @@ namespace GitLabPages.Impl
                 );
             }
             
-            match = Regex.Match(artifactPath, @"\/-\/pipeline\/([0-9])+(?:\/)");
+            match = Regex.Match(artifactPath, @"\/-\/pipeline\/([0-9]+)(?:\/)");
             if (match.Success)
             {
                 var pipelineId = int.Parse(match.Groups[1].Value);
