@@ -41,7 +41,7 @@ namespace GitLabPages.Impl
             var currentIndex = 1;
             var current = "/";
             var currentIteraton = 0;
-            var maxIterations = 2;
+            var maxIterations = 3;
             if (_options.AdditionalParentGroups > 0)
             {
                 maxIterations += _options.AdditionalParentGroups;
