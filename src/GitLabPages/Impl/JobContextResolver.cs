@@ -67,6 +67,7 @@ namespace GitLabPages.Impl
                 if(!string.IsNullOrEmpty(_options.RootProject))
                 {
                     project = await LookupProjectById(_options.RootProject);
+                    current = "";
                 }
             }
             
